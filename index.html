@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Happy Birthday!</title>
+  <title>Cinematic Birthday Scene</title>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
+    /* Cinematic Dark Room */
     body {
-      background-color: #1a1a2e;
+      background: radial-gradient(circle at 50% 60%, #3a3a4f 0%, #0a0a10 80%);
       color: white;
-      font-family: 'Arial', sans-serif;
+      font-family: 'Georgia', serif;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -17,95 +18,178 @@
       height: 100vh;
       margin: 0;
       overflow: hidden;
+      transition: background 2s ease-in-out;
     }
 
-    /* Volume Meter for debugging */
+    /* Bright Room when blown out */
+    body.party-mode {
+      background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0d0d1a 100%);
+    }
+
     #volumeMeter {
       position: absolute;
       top: 20px;
       left: 20px;
-      font-size: 1.2rem;
-      color: #888;
-      display: none; /* Hidden until mic starts */
+      font-size: 1rem;
+      color: rgba(255,255,255,0.3);
+      display: none;
+      font-family: sans-serif;
     }
 
-    /* Text Styling */
+    /* Dramatic Text Reveal */
     h1 {
-      font-size: 3rem;
+      position: absolute;
+      top: 15%;
+      font-size: 4rem;
       opacity: 0;
-      transition: opacity 2s ease-in;
-      text-shadow: 0 0 10px #ff9a9e, 0 0 20px #fecfef;
+      transform: scale(0.8);
+      transition: all 2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-shadow: 0 0 20px #ff9a9e, 0 0 40px #fecfef;
+      letter-spacing: 5px;
+      text-align: center;
+      z-index: 10;
     }
     
-    .show-text h1 {
+    .party-mode h1 {
       opacity: 1;
+      transform: scale(1);
     }
 
-    /* Candle and Cake Styling */
-    .cake {
+    /* Scene Container for Entrance Animation */
+    .scene {
       position: relative;
-      margin-top: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 0;
+      transform: translateY(50px);
+      transition: all 2s ease-out;
     }
 
+    .scene.action {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Building the Cake */
+    .plate {
+      width: 250px;
+      height: 20px;
+      background: #eee;
+      border-radius: 50%;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+      position: relative;
+      top: 20px;
+      z-index: 1;
+    }
+
+    .cake-tier-bottom {
+      width: 200px;
+      height: 80px;
+      background: linear-gradient(to right, #e27d89, #f29ca6, #e27d89);
+      border-radius: 10px;
+      position: relative;
+      z-index: 2;
+      box-shadow: inset 0 -10px 20px rgba(0,0,0,0.2);
+    }
+
+    .cake-tier-top {
+      width: 140px;
+      height: 60px;
+      background: linear-gradient(to right, #ffd1d8, #ffe0e5, #ffd1d8);
+      border-radius: 10px;
+      position: absolute;
+      bottom: 80px;
+      z-index: 3;
+      box-shadow: inset 0 -5px 10px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: center;
+    }
+
+    .icing {
+      width: 100%;
+      height: 20px;
+      background: #fff;
+      border-radius: 10px 10px 20px 20px;
+      position: absolute;
+      top: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    /* The Candle & Flame Wrapper */
     .candle {
-      width: 20px;
-      height: 120px;
-      background: linear-gradient(#fff, #f0f0f0);
-      border-radius: 5px;
-      position: relative;
-      box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+      width: 16px;
+      height: 70px;
+      background: repeating-linear-gradient(
+        45deg,
+        #fff,
+        #fff 10px,
+        #ff6b6b 10px,
+        #ff6b6b 20px
+      );
+      border-radius: 4px;
+      position: absolute;
+      bottom: 50px;
+      z-index: 4;
+      box-shadow: inset -2px 0 5px rgba(0,0,0,0.2);
     }
 
     .wick {
-      width: 4px;
-      height: 15px;
+      width: 3px;
+      height: 12px;
       background: #333;
       position: absolute;
       top: -10px;
-      left: 8px;
+      left: 6px;
     }
 
-    /* Flame Animation */
-    .flame {
-      width: 20px;
-      height: 40px;
-      background: #ff9d00;
-      border-radius: 50% 50% 20% 20%;
+    /* Sound-Reactive Flame Wrapper */
+    #flame-wrapper {
       position: absolute;
       top: -45px;
-      left: 0px;
-      box-shadow: 0 0 20px #ff9d00, 0 0 40px #ff9d00, 0 0 60px #ff5100;
-      animation: flicker 0.1s infinite alternate;
-      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+      left: -2px;
       transform-origin: bottom center;
+      transition: transform 0.1s linear; /* Smooth reaction to sound */
     }
 
-    @keyframes flicker {
-      0% { transform: scale(1) rotate(-2deg); opacity: 0.9; }
-      100% { transform: scale(1.05) rotate(2deg); opacity: 1; }
+    /* The Actual Flickering Flame */
+    .flame {
+      width: 20px;
+      height: 35px;
+      background: radial-gradient(ellipse at bottom, #fff 10%, #ffcf00 40%, #ff6b00 100%);
+      border-radius: 50% 50% 20% 20%;
+      box-shadow: 0 0 20px #ff9d00, 0 0 50px #ff9d00, 0 0 80px #ff5100;
+      animation: base-flicker 0.1s infinite alternate;
+      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
     }
 
-    /* When the candle is blown out */
-    .blown-out .flame {
+    @keyframes base-flicker {
+      0% { transform: scale(1) translateY(0); opacity: 0.9; }
+      100% { transform: scale(1.05) translateY(-2px); opacity: 1; }
+    }
+
+    .party-mode .flame {
       opacity: 0;
       transform: scale(0);
     }
 
-    /* Start Button */
     #startBtn {
-      margin-top: 40px;
-      padding: 10px 20px;
+      position: absolute;
+      z-index: 20;
+      padding: 15px 30px;
       font-size: 1.2rem;
-      background: #ff9d00;
+      background: #fff;
       color: #1a1a2e;
       border: none;
-      border-radius: 5px;
+      border-radius: 50px;
       cursor: pointer;
       font-weight: bold;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
     }
     
     #startBtn:hover {
-      background: #ffb732;
+      transform: scale(1.05);
     }
   </style>
 </head>
@@ -113,20 +197,31 @@
 
   <div id="volumeMeter">Mic Volume: 0</div>
 
-  <div class="cake">
-    <div class="candle">
-      <div class="wick"></div>
-      <div class="flame" id="flame"></div>
+  <button id="startBtn">Action! (Start Movie Scene)</button>
+
+  <h1>Happy Birthday! 🎬🎂</h1>
+
+  <div class="scene" id="scene">
+    <div class="plate"></div>
+    <div class="cake-tier-bottom">
+      <div class="icing"></div>
+    </div>
+    <div class="cake-tier-top">
+      <div class="icing"></div>
+      <div class="candle">
+        <div class="wick"></div>
+        <div id="flame-wrapper">
+          <div class="flame" id="flame"></div>
+        </div>
+      </div>
     </div>
   </div>
-
-  <h1>Happy Birthday! 🎉</h1>
-
-  <button id="startBtn">Click to Light Candle (Allow Mic)</button>
 
   <script>
     const startBtn = document.getElementById('startBtn');
     const volumeMeter = document.getElementById('volumeMeter');
+    const scene = document.getElementById('scene');
+    const flameWrapper = document.getElementById('flame-wrapper');
     const body = document.body;
     
     let audioContext;
@@ -136,14 +231,13 @@
 
     startBtn.addEventListener('click', async () => {
       try {
-        // 1. Ask for microphone permission
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         
-        // Hide button, show volume meter
+        // Hide button, fade in the cake cinematically
         startBtn.style.display = 'none';
         volumeMeter.style.display = 'block';
+        setTimeout(() => scene.classList.add('action'), 100);
         
-        // 2. Set up Web Audio API
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
         microphone = audioContext.createMediaStreamSource(stream);
@@ -154,58 +248,81 @@
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
         
-        // 3. Constantly monitor the audio levels
         function listenToBlow() {
-          if (blownOut) return; // Stop listening if already blown out
+          if (blownOut) return; 
           
           analyser.getByteFrequencyData(dataArray);
           
-          // Calculate the average volume
           let sum = 0;
           for (let i = 0; i < bufferLength; i++) {
             sum += dataArray[i];
           }
           let averageVolume = sum / bufferLength;
 
-          // Display the volume on screen so you can see if it's working
           volumeMeter.innerText = "Mic Volume: " + Math.round(averageVolume);
 
-          // 4. Threshold for blowing (Lowered to 35 to make it easier!)
-          if (averageVolume > 35) {
+          // SOUND REACTION MAGIC:
+          // If you talk (low volume), the flame dances and bends slightly
+          if (averageVolume > 5 && averageVolume < 40) {
+             let scaleY = 1 + (averageVolume / 100); // gets taller
+             let skewX = (Math.random() - 0.5) * averageVolume; // bends left/right randomly based on sound
+             flameWrapper.style.transform = `scaleY(${scaleY}) skewX(${skewX}deg)`;
+          } else if (averageVolume <= 5) {
+             // Return to normal if quiet
+             flameWrapper.style.transform = `scaleY(1) skewX(0deg)`;
+          }
+
+          // BLOW OUT THRESHOLD (Set to 40)
+          if (averageVolume > 40) {
             blowOutCandle();
           } else {
-            // Keep listening
             requestAnimationFrame(listenToBlow);
           }
         }
         
-        listenToBlow(); // Start the loop
+        listenToBlow(); 
 
       } catch (err) {
-        alert("Microphone access is required or was blocked by your browser!");
+        alert("Microphone access is required for the movie magic!");
         console.error(err);
       }
     });
 
-    // 5. The effect when the candle goes out
     function blowOutCandle() {
       blownOut = true;
-      volumeMeter.style.display = 'none'; // hide the meter
+      volumeMeter.style.display = 'none'; 
       
-      // Hide flame via CSS class
-      body.classList.add('blown-out');
+      // Trigger cinematic room change
+      body.classList.add('party-mode');
       
-      // Show birthday text
-      body.classList.add('show-text');
-      
-      // Trigger confetti
-      setTimeout(() => {
+      // Cinematic multi-burst confetti
+      fireConfetti();
+    }
+
+    function fireConfetti() {
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      (function frame() {
         confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 }
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#ff9a9e', '#fecfef', '#ffffff']
         });
-      }, 500);
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#ff9a9e', '#fecfef', '#ffffff']
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      }());
     }
   </script>
 </body>
